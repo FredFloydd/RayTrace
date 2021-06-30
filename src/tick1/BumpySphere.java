@@ -1,4 +1,4 @@
-package uk.ac.cam.cl.gfxintro.crsid.tick1;
+package tick1;
 
 import java.io.File;
 import java.io.IOException;

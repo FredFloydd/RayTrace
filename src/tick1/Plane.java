@@ -1,4 +1,4 @@
-package uk.ac.cam.cl.gfxintro.crsid.tick1;
+package tick1;
 
 public class Plane extends SceneObject {
 	
@@ -47,11 +47,17 @@ public class Plane extends SceneObject {
 		Vector3 Q = this.point;
 		Vector3 N = this.normal;
 
-		// TODO: Calculate ray parameter s at intersection
-		// TODO: If intersection occurs behind camera, return empty RaycastHit;
-		//			otherwise return RaycastHit describing point of intersection
+		// Calculate ray parameter s at intersection
+		double s = (Q.subtract(O)).dot(N) / D.dot(N);
 
-		return new RaycastHit(); 
+		// If intersection occurs behind camera, return empty RaycastHit
+		if (s <= 0) {
+			return new RaycastHit();
+		}
+		// Otherwise return RaycastHit describing point of intersection
+		else {
+			return new RaycastHit(this, s, ray.evaluateAt(s), N);
+		}
 }
 
 	// Get normal to the plane

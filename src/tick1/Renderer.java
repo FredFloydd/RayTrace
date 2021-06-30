@@ -1,4 +1,4 @@
-package uk.ac.cam.cl.gfxintro.crsid.tick1;
+package tick1;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -68,7 +68,8 @@ public class Renderer {
 		double k_s = object.getPhong_kS();
 		double alpha = object.getPhong_alpha();
 
-		// TODO: Add ambient light term to start with 
+		// Add ambient light term
+		colourToReturn = colourToReturn.add(C_diff.scale(I_a));
 
 		// Loop over each point light source
 		List<PointLight> pointLights = scene.getPointLights();
@@ -80,13 +81,20 @@ public class Renderer {
 			ColorRGB C_spec = light.getColour();
 			ColorRGB I = light.getIlluminationAt(distanceToLight);
 
-			// TODO: Calculate L, V, R
-			// TODO: Calculate ColorRGB diffuse and ColorRGB specular terms
-			// TODO: Add these terms to colourToReturn
+			// Calculate L, V, R
+			Vector3 L = (light.getPosition().subtract(P)).normalised();
+			Vector3 V = (O.subtract(P)).normalised();
+			Vector3 R = ((L.scale(-1)).add(N.scale(2 * L.dot(N)))).normalised();
 
-			colourToReturn = object.getColour(); // TODO: remove this line
-
-
+			// Calculate ColorRGB diffuse and ColorRGB specular terms, and add to colorToReturn
+			if (N.dot(L) > 0) {
+				ColorRGB diffuse = I.scale(C_diff.scale(k_d * N.dot(L)));
+				colourToReturn = colourToReturn.add(diffuse);
+			}
+			if (R.dot(V) > 0) {
+				ColorRGB specular = I.scale(C_spec.scale(k_s * Math.pow(R.dot(V), alpha)));
+				colourToReturn = colourToReturn.add(specular);
+			}
 		}
 		return colourToReturn;
 	}

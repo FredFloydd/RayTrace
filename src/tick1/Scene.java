@@ -1,4 +1,4 @@
-package uk.ac.cam.cl.gfxintro.crsid.tick1;
+package tick1;
 
 import java.util.LinkedList;
 import java.util.List;

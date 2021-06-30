@@ -1,4 +1,4 @@
-package uk.ac.cam.cl.gfxintro.crsid.tick1;
+package tick1;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -8,8 +8,8 @@ import javax.imageio.ImageIO;
 
 public class Tick1 {
 	// Default input and output files
-	public static final String DEFAULT_INPUT = "tick1.xml";
-	public static final String DEFAULT_OUTPUT = "output.png";
+	public static final String DEFAULT_INPUT = "assets/test1.xml";
+	public static final String DEFAULT_OUTPUT = "assets/output.png";
 	
 	public static final int DEFAULT_BOUNCES = 2; // Default number of ray bounces
 
