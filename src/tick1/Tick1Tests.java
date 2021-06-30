@@ -363,7 +363,7 @@ public class Tick1Tests {
 	}
 
 	public static void main(String[] args) {
-		boolean testAll = false;
+		boolean testAll = true;
 		if (args.length > 0) {
 			testAll = args[0].equals("--all") || args[0].equals("-a");
 		}

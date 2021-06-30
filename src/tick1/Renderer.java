@@ -44,11 +44,34 @@ public class Renderer {
         Vector3 N = closestHit.getNormal();
         Vector3 O = ray.getOrigin();
 
-     	// Illuminate the surface
+		// Calculate direct illumination at the point
+		ColorRGB directIllumination = this.illuminate(scene, object, P, N, O);
 
-     	return this.illuminate(scene, object, P, N, O);
+		// Get reflectivity of object
+		double reflectivity = object.getReflectivity();
 
+		// Base case - if no bounces left or non-reflective surface
+		if (bouncesLeft == 0 || reflectivity == 0) {
+			return directIllumination;
+		}
+		else { // Recursive case
+			ColorRGB reflectedIllumination;
 
+			// Calculate the direction R of the bounced ray
+			Vector3 R = ray.getDirection().reflectIn(N).scale(-1);
+
+			// Spawn a reflectedRay with bias
+			Ray reflectedRay = new Ray(P.add(R.scale(EPSILON)), R);
+
+			// Calculate reflectedIllumination by tracing reflectedRay
+			reflectedIllumination = trace(scene, reflectedRay, bouncesLeft - 1);
+
+			// Scale direct and reflective illumination to conserve light
+			directIllumination = directIllumination.scale(1.0 - reflectivity);
+			reflectedIllumination = reflectedIllumination.scale(reflectivity);
+
+			return directIllumination.add(reflectedIllumination);
+		}
 	}
 
 	/*
@@ -84,7 +107,7 @@ public class Renderer {
 			// Calculate L, V, R
 			Vector3 L = (light.getPosition().subtract(P)).normalised();
 			Vector3 V = (O.subtract(P)).normalised();
-			Vector3 R = ((N.scale(2 * L.dot(N))).subtract(L)).normalised();
+			Vector3 R = L.reflectIn(N);
 
 			// Cast shadow ray
 			Ray shadowRay = new Ray(P.add(L.scale(EPSILON)), L);
