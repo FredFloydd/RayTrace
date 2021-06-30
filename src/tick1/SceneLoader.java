@@ -53,8 +53,8 @@ public class SceneLoader {
 
 			case "plane":
 				Plane plane = new Plane(getPosition(element), getNormal(element), getColour(element),
-						getDouble(element, "kD", 0.8), getDouble(element, "kS", 1.2),
-						getDouble(element, "alphaS", 10), getDouble(element, "reflectivity", 0.3)
+						getDouble(element, "kD", 0.6), getDouble(element, "kS", 0.0),
+						getDouble(element, "alphaS", 0.0), getDouble(element, "reflectivity", 0.1)
 						);
 				scene.addObject(plane);
 				break;

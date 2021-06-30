@@ -84,17 +84,28 @@ public class Renderer {
 			// Calculate L, V, R
 			Vector3 L = (light.getPosition().subtract(P)).normalised();
 			Vector3 V = (O.subtract(P)).normalised();
-			Vector3 R = ((L.scale(-1)).add(N.scale(2 * L.dot(N)))).normalised();
+			Vector3 R = ((N.scale(2 * L.dot(N))).subtract(L)).normalised();
 
-			// Calculate ColorRGB diffuse and ColorRGB specular terms, and add to colorToReturn
-			if (N.dot(L) > 0) {
-				ColorRGB diffuse = I.scale(C_diff.scale(k_d * N.dot(L)));
-				colourToReturn = colourToReturn.add(diffuse);
+			// Cast shadow ray
+			Ray shadowRay = new Ray(P.add(L.scale(EPSILON)), L);
+
+			// Determine if shadowRay intersects with an object
+			RaycastHit shadowint = scene.findClosestIntersection(shadowRay);
+
+			// If it does not, add diffuse/specular components
+			SceneObject shadowobj = shadowint.getObjectHit();
+			if (shadowobj == null) {
+				// Calculate ColorRGB diffuse and ColorRGB specular terms, and add to colorToReturn
+				if (N.dot(L) > 0) {
+					ColorRGB diffuse = I.scale(C_diff.scale(k_d * N.dot(L)));
+					colourToReturn = colourToReturn.add(diffuse);
+				}
+				if (R.dot(V) > 0) {
+					ColorRGB specular = I.scale(C_spec.scale(k_s * Math.pow(R.dot(V), alpha)));
+					colourToReturn = colourToReturn.add(specular);
+				}
 			}
-			if (R.dot(V) > 0) {
-				ColorRGB specular = I.scale(C_spec.scale(k_s * Math.pow(R.dot(V), alpha)));
-				colourToReturn = colourToReturn.add(specular);
-			}
+
 		}
 		return colourToReturn;
 	}
