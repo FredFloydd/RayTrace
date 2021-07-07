@@ -100,14 +100,14 @@ public class Renderer {
 			PointLight light = pointLights.get(i); // Select point light
 			
 			// Calculate point light constants
-			double distanceToLight = light.getPosition().subtract(P).magnitude();
+			double distanceToLight = (light.getPosition().subtract(P)).magnitude();
 			ColorRGB C_spec = light.getColour();
 			ColorRGB I = light.getIlluminationAt(distanceToLight);
 
 			// Calculate L, V, R
 			Vector3 L = (light.getPosition().subtract(P)).normalised();
 			Vector3 V = (O.subtract(P)).normalised();
-			Vector3 R = L.reflectIn(N);
+			Vector3 R = L.reflectIn(N).normalised();
 
 			// Cast shadow ray
 			Ray shadowRay = new Ray(P.add(L.scale(EPSILON)), L);
@@ -117,7 +117,7 @@ public class Renderer {
 
 			// If it does not, add diffuse/specular components
 			SceneObject shadowobj = shadowint.getObjectHit();
-			if (shadowobj == null) {
+			if (shadowint.getDistance() > distanceToLight) {
 				// Calculate ColorRGB diffuse and ColorRGB specular terms, and add to colorToReturn
 				if (N.dot(L) > 0) {
 					ColorRGB diffuse = I.scale(C_diff.scale(k_d * N.dot(L)));
