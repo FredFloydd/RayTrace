@@ -9,7 +9,7 @@ public class Sphere extends SceneObject {
 	private final double SPHERE_REFLECTIVITY = 0.3;
 
 	// The world-space position of the sphere
-	private Vector3 position;
+	protected Vector3 position;
 
 	public Vector3 getPosition() {
 		return position;
