@@ -17,6 +17,17 @@ public class Renderer {
 	// Background colour of the image
 	private ColorRGB backgroundColor = new ColorRGB(0.001);
 
+	// Number of shadow rays cast for soft shadows
+	private final double SHADOW_RAY_COUNT = 20;
+
+	// Size of each light source
+	private final double LIGHT_SIZE = 0.4;
+
+	// Distributed depth-of-field constants
+	private final int DOF_RAY_COUNT = 150; // No. of spawned DoF rays
+	private final double DOF_FOCAL_PLANE = 3.51805; // Focal length of camera
+	private final double DOF_AMOUNT = 0.07; // Amount of DoF effect
+
 	public Renderer(int width, int height, int bounces) {
 		this.width = width;
 		this.height = height;
@@ -98,7 +109,7 @@ public class Renderer {
 		List<PointLight> pointLights = scene.getPointLights();
 		for (int i = 0; i < pointLights.size(); i++) {
 			PointLight light = pointLights.get(i); // Select point light
-			
+
 			// Calculate point light constants
 			double distanceToLight = (light.getPosition().subtract(P)).magnitude();
 			ColorRGB C_spec = light.getColour();
@@ -109,26 +120,34 @@ public class Renderer {
 			Vector3 V = (O.subtract(P)).normalised();
 			Vector3 R = L.reflectIn(N).normalised();
 
-			// Cast shadow ray
-			Ray shadowRay = new Ray(P.add(L.scale(EPSILON)), L);
+			// Scale factor for soft shadows, which will be used to scale diffuse and specular components
+			double shadowScaleFactor = 0;
 
-			// Determine if shadowRay intersects with an object
-			RaycastHit shadowint = scene.findClosestIntersection(shadowRay);
+			// Cast a number of shadow rays to points within the light, averaging the contributions of each
+			for (int j = 0; j < SHADOW_RAY_COUNT; j++) {
+				// Select a random point within the light source
+				Vector3 locationInLight = Vector3.randomInsideUnitSphere().scale(LIGHT_SIZE);
 
-			// If it does not, add diffuse/specular components
-			SceneObject shadowobj = shadowint.getObjectHit();
-			if (shadowint.getDistance() > distanceToLight) {
-				// Calculate ColorRGB diffuse and ColorRGB specular terms, and add to colorToReturn
-				if (N.dot(L) > 0) {
-					ColorRGB diffuse = I.scale(C_diff.scale(k_d * N.dot(L)));
-					colourToReturn = colourToReturn.add(diffuse);
-				}
-				if (R.dot(V) > 0) {
-					ColorRGB specular = I.scale(C_spec.scale(k_s * Math.pow(R.dot(V), alpha)));
-					colourToReturn = colourToReturn.add(specular);
+				// Cast a ray to that random point, and get its intersection with scene objects
+				Vector3 shadowDirection = (light.getPosition().add(locationInLight).subtract(P)).normalised();
+				Ray shadowRay = new Ray(P.add(shadowDirection.scale(EPSILON)), shadowDirection);
+				RaycastHit shadowInt = scene.findClosestIntersection(shadowRay);
+
+				// If the ray is not obstructed, adjust the scale factor
+				if (shadowInt.getDistance() > distanceToLight) {
+					shadowScaleFactor += 1 / SHADOW_RAY_COUNT;
 				}
 			}
 
+			// Add diffuse/specular components
+			if (N.dot(L) > 0) {
+				ColorRGB diffuse = I.scale(C_diff.scale(k_d * N.dot(L) * shadowScaleFactor));
+				colourToReturn = colourToReturn.add(diffuse);
+			}
+			if (R.dot(V) > 0) {
+				ColorRGB specular = I.scale(C_spec.scale(k_s * Math.pow(R.dot(V), alpha) * shadowScaleFactor));
+				colourToReturn = colourToReturn.add(specular);
+			}
 		}
 		return colourToReturn;
 	}
@@ -146,7 +165,24 @@ public class Renderer {
 		for (int y = 0; y < height; ++y) {
 			for (int x = 0; x < width; ++x) {
 				Ray ray = camera.castRay(x, y); // Cast ray through pixel
-				ColorRGB linearRGB = trace(scene, ray, bounces); // Trace path of cast ray and determine colour
+
+				// Find ray intersection with focal plane
+				Vector3 intersectionPoint = ray.getDirection().scale(DOF_FOCAL_PLANE / ray.getDirection().z);
+
+				// Initialise RGB value for the pixel
+				ColorRGB linearRGB = new ColorRGB(0);
+
+				// Cast rays randomly from the camera aperture through the intersection point
+				for (int i = 0; i < DOF_RAY_COUNT; i++){
+					Vector3 origin = new Vector3((-1 + 2 * Math.random()) * DOF_AMOUNT, (-1 + 2 * Math.random()) * DOF_AMOUNT, 0);
+					Vector3 rayDirection = (intersectionPoint.subtract(origin)).normalised();
+					Ray dof_Ray = new Ray(origin, rayDirection);
+
+					// Add a scaled contribution from tracing the ray
+					ColorRGB colourToAdd = trace(scene, dof_Ray, bounces).scale(1 / (float) DOF_RAY_COUNT);
+					linearRGB = linearRGB.add(colourToAdd);
+				}
+
 				ColorRGB gammaRGB = tonemap( linearRGB );
 				image.setRGB(x, y, gammaRGB.toRGB()); // Set image colour to traced colour
 			}

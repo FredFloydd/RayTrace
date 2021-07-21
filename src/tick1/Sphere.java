@@ -67,28 +67,28 @@ public class Sphere extends SceneObject {
 
 		// If so, work out any point of intersection
 		else {
-			double dist_lo = (-b - Math.pow(det, 0.5)) / 2.0;
-			double dist_hi = (-b + Math.pow(det, 0.5)) / 2.0;
+			double distLow = (-b - Math.pow(det, 0.5)) / 2.0;
+			double distHigh = (-b + Math.pow(det, 0.5)) / 2.0;
 
 			// If both points are behind the camera, return an empty RaycastHit
-			if ((dist_lo <= 0) & (dist_hi <= 0)) {
+			if ((distLow <= 0) & (distHigh <= 0)) {
 				return new RaycastHit();
 			}
 
 			// If one is positive and one negative, return a RaycastHit for the positive solution
-			else if ((dist_lo <= 0) & (dist_hi > 0)) {
-				Vector3 location = ray.evaluateAt(dist_hi);
+			else if ((distLow <= 0) & (distHigh > 0)) {
+				Vector3 location = ray.evaluateAt(distHigh);
 				Vector3 normal = this.getNormalAt(location);
 
-				return new RaycastHit(this, dist_hi, location, normal);
+				return new RaycastHit(this, distHigh, location, normal);
 			}
 
 			// Otherwise return the solution nearer to the camera
 			else {
-				Vector3 location = ray.evaluateAt(dist_lo);
+				Vector3 location = ray.evaluateAt(distLow);
 				Vector3 normal = this.getNormalAt(location);
 
-				return new RaycastHit(this, dist_lo, location, normal);
+				return new RaycastHit(this, distLow, location, normal);
 			}
 		}
 	}
